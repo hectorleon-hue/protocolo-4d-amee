@@ -622,9 +622,20 @@ function verCandado(){
 }
 
 function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function limpia(txt, conector){
+  // El placeholder sugiere escribir "Cuando…", "en vez de…", "voy a…".
+  // Si el conector ya viene en el texto, no lo duplicamos.
+  let t = (txt||'').trim().replace(/^[\u2026.,;:\s]+/, '');
+  const re = new RegExp('^' + conector + '\\s+', 'i');
+  t = t.replace(re, '');
+  return t.replace(/[\u2026.,;\s]+$/, '');
+}
 function receta(){
   if(!S.disparador && !S.vieja && !S.nueva) return '';
-  return `Cuando ${S.disparador||'[disparador]'},\nen vez de ${S.vieja||'[conducta vieja]'},\nvoy a ${S.nueva||'[conducta nueva]'}.`;
+  const d = limpia(S.disparador, 'cuando')   || '[disparador]';
+  const v = limpia(S.vieja,      'en vez de')|| '[conducta vieja]';
+  const n = limpia(S.nueva,      'voy a')    || '[conducta nueva]';
+  return `Cuando ${d},\nen vez de ${v},\nvoy a ${n}.`;
 }
 
 async function verCAT(){
@@ -727,7 +738,7 @@ async function descargarPDF(){
     doc.text((quien ? quien + '  ·  ' : '') + 'Conferencia AMEE  ·  El arte de desaprender', M, 36, { maxWidth: CW-30 });
 
     /* ---- Bloques ---- */
-    let y = 60;
+    let y = 56;
     const cn = S.candado ? CANDADOS[S.candado].n : '—';
     const bloques = [
       ['D1 · LO QUE VOY A DESAPRENDER', S.habito, CIAN],
@@ -744,21 +755,21 @@ async function descargarPDF(){
 
     bloques.forEach(([t, v, col])=>{
       const val = (v && String(v).trim()) ? String(v) : 'Sin definir';
-      doc.setFont('OS','normal'); doc.setFontSize(11);
+      doc.setFont('OS','normal'); doc.setFontSize(10);
       const lines = doc.splitTextToSize(val, CW - 8);
-      const bh = 7 + lines.length * 4.7 + 3;
-      if (y + bh > H - 42) { doc.addPage(); y = 22; }
+      const bh = 6.4 + lines.length * 4.3 + 2.4;
+      if (y + bh > H - 50) { doc.addPage(); y = 22; }
       doc.setFillColor(col[0],col[1],col[2]); doc.rect(M, y, 1.6, bh, 'F');
-      doc.setFont('Mont','normal'); doc.setFontSize(7.6); doc.setTextColor(col[0],col[1],col[2]);
-      doc.text(t, M + 5, y + 4.5);
-      doc.setFont('OS','normal'); doc.setFontSize(11); doc.setTextColor(...TXT);
-      doc.text(lines, M + 5, y + 10);
-      y += bh + 5;
+      doc.setFont('Mont','normal'); doc.setFontSize(7.2); doc.setTextColor(col[0],col[1],col[2]);
+      doc.text(t, M + 5, y + 4);
+      doc.setFont('OS','normal'); doc.setFontSize(10); doc.setTextColor(...TXT);
+      doc.text(lines, M + 5, y + 9.2);
+      y += bh + 3.6;
     });
 
     /* ---- Cierre / contacto ---- */
-    if (y > H - 62) { doc.addPage(); y = 24; }
-    y = Math.max(y, H - 62);
+    if (y > H - 50) { doc.addPage(); y = 24; }
+    y = H - 50;
     doc.setFillColor(...NAVY); doc.rect(0, y, W, H - y, 'F');
     doc.setFillColor(...CIAN); doc.rect(0, y, W, 0.9, 'F');
     try { doc.addImage('data:image/png;base64,'+LOGO_B64, 'PNG', M, y + 9, 18, 18); } catch(e){}
