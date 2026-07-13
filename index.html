@@ -675,10 +675,20 @@ async function guardar(){
     payload: { respuestas: S.resp, ua: navigator.userAgent.slice(0,180) }
   };
   try{
-    const { error } = await DB.from(DB_TABLE).upsert(fila, { onConflict: 'email,evento' });
-    if(error){ console.warn('Supabase:', error.message); toast('Tu plan se generó (guardado local)','#F4A261'); }
+    // INSERT primero; si el correo ya existe (23505), actualizamos esa fila.
+    // No usamos upsert: PostgREST lo resuelve con ON CONFLICT y choca con la política RLS de INSERT.
+    let { error } = await DB.from(DB_TABLE).insert(fila);
+
+    if(error && error.code === '23505'){
+      const r = await DB.from(DB_TABLE).update(fila)
+                        .eq('email', S.email).eq('evento', fila.evento);
+      error = r.error;
+    }
+
+    if(error){ console.warn('Supabase:', error.code, error.message);
+               toast('Tu plan está listo (no se pudo guardar)','#F4A261'); }
     else { toast('Plan guardado ✓'); }
-  }catch(e){ console.warn(e); }
+  }catch(e){ console.warn(e); toast('Tu plan está listo','#F4A261'); }
 }
 
 /* ---------- PDF ---------- */
